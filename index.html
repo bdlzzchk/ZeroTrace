@@ -761,7 +761,8 @@
         [0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[4,3],[3,5],[5,2]
       ];
       let angleY = 0, angleX = 0.15;
-      let glitchActive = false, glitchFrames = 0, glitchCooldown = 2.2, lastTs = 0;
+      let glitchActive = false, glitchFrames = 0, glitchCooldown = 0.6; // aggressive: shorter cooldown
+      let lastTs = 0;
       let greenMode = false;
       let greenModeEndTime = 0;
 
@@ -775,33 +776,41 @@
         let transformed = vertices.map(v => rotateZ(rotateX(rotateY(v, angleY), angleX), 0));
         
         let mainColor = greenMode ? '#00c853' : '#FFFFFF';
-        let glitchRed = greenMode ? '#00c853' : '#666666';
-        let glitchBlue = greenMode ? '#00c853' : '#444444';
+        let glitchRed = greenMode ? '#00c853' : '#4B0082';   
+        let glitchBlue = greenMode ? '#00c853' : '#8A2BE2';  
         
         edges.forEach(([a,b])=>{
           const pa = project(transformed[a]), pb = project(transformed[b]);
           if(offset !== 0){
-            ctx.beginPath(); ctx.moveTo(pa[0]-offset,pa[1]); ctx.lineTo(pb[0]-offset,pb[1]);
-            ctx.strokeStyle = glitchRed; ctx.lineWidth=1.2; ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(pa[0]+offset,pa[1]); ctx.lineTo(pb[0]+offset,pb[1]);
-            ctx.strokeStyle = glitchBlue; ctx.lineWidth=1.2; ctx.stroke();
+            // stronger glitch offsets
+            let offX = offset * (0.8 + Math.random() * 0.6);
+            let offY = offset * (0.4 + Math.random() * 0.8);
+            ctx.beginPath(); ctx.moveTo(pa[0]-offX, pa[1]-offY); ctx.lineTo(pb[0]-offX, pb[1]-offY);
+            ctx.strokeStyle = glitchRed; ctx.lineWidth=2.2; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(pa[0]+offX*0.7, pa[1]+offY*0.7); ctx.lineTo(pb[0]+offX*0.7, pb[1]+offY*0.7);
+            ctx.strokeStyle = glitchBlue; ctx.lineWidth=2.2; ctx.stroke();
+            // extra glitch lines
+            if(Math.random() > 0.5) {
+              ctx.beginPath(); ctx.moveTo(pa[0]-offX*1.2, pa[1]+offY*0.3); ctx.lineTo(pb[0]-offX*1.2, pb[1]+offY*0.3);
+              ctx.strokeStyle = '#ff00ff'; ctx.lineWidth=1.5; ctx.stroke();
+            }
           }
           ctx.beginPath(); ctx.moveTo(pa[0],pa[1]); ctx.lineTo(pb[0],pb[1]);
-          ctx.strokeStyle = mainColor; ctx.lineWidth=1.5; ctx.stroke();
+          ctx.strokeStyle = mainColor; ctx.lineWidth=1.8; ctx.stroke();
         });
         
         let vertexColor = greenMode ? '#00c853' : '#FFFFFF';
         transformed.forEach(p => { 
           const pp=project(p); 
           ctx.beginPath(); 
-          ctx.arc(pp[0],pp[1],2.5,0,Math.PI*2); 
+          ctx.arc(pp[0],pp[1],3.0,0,Math.PI*2); 
           ctx.fillStyle = vertexColor; 
           ctx.fill(); 
         });
         
         if(greenMode){
-          ctx.shadowColor = 'rgba(0, 200, 83, 0.3)';
-          ctx.shadowBlur = 20;
+          ctx.shadowColor = 'rgba(0, 200, 83, 0.4)';
+          ctx.shadowBlur = 25;
         } else {
           ctx.shadowColor = 'transparent';
           ctx.shadowBlur = 0;
@@ -811,27 +820,31 @@
       function animate(ts){
         const dt = Math.min((ts - lastTs)/1000, 0.05); 
         lastTs = ts;
-        angleY += 0.52 * dt;
+        angleY += 0.62 * dt; // slightly faster rotation
         
         if(greenMode && ts >= greenModeEndTime){
           greenMode = false;
         }
         
         glitchCooldown -= dt;
-        let offset = 0;
         if(glitchCooldown <= 0 && !glitchActive){ 
           glitchActive = true; 
           glitchFrames = 0; 
         }
         if(glitchActive){ 
           glitchFrames++; 
-          offset = glitchFrames < 8 ? 6 + Math.random() * 4 : 0; 
-          if(glitchFrames >= 13){ 
+          // more intense glitch: larger offset, random bursts
+          let intensity = 8 + Math.random() * 12;
+          if(glitchFrames % 3 === 0) intensity *= 1.5; // extra burst
+          let offset = glitchFrames < 10 ? intensity : 0; 
+          if(glitchFrames >= 12){ 
             glitchActive = false; 
-            glitchCooldown = 1.7 + Math.random() * 2.3; 
+            glitchCooldown = 0.4 + Math.random() * 0.6; // shorter cooldown, more frequent
           } 
+          drawRhombus(offset);
+        } else {
+          drawRhombus(0);
         }
-        drawRhombus(offset);
         requestAnimationFrame(animate);
       }
       requestAnimationFrame(ts => { lastTs = ts; requestAnimationFrame(animate); });
