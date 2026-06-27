@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>ZeroTrace — Security Audit</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;500;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+      cursor: default;
+    }
+    a, button, [role="button"], input, textarea, select {
+      cursor: pointer;
+    }
+
+    p, h1, h2, h3, h4, h5, h6, span, div {
+      cursor: default;
+    }
+    :root {
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --card: #111111;
+      --border: #3B3B3B;
+      --border2: #3D3A3A;
+      --text: #FFFFFF;
+      --text-muted: #a0a0a0;
+      --text-dim: #555555;
+      --accent: #FFFFFF;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Kaisei Decol', serif;
+      --green: #00c853;
+      --green-glow: rgba(0, 200, 83, 0.3);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    /* ===== ИСПРАВЛЕНИЕ ДЛЯ ТЁМНОЙ ТЕМЫ ===== */
+    input, 
+    button, 
+    textarea, 
+    select {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .cta-header,
+    .btn-fill,
+    .submit-mini {
+      background: #FFFFFF !important;
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+    }
+
+    .submit-mini.success {
+      background: #00c853 !important;
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+    }
+    /* ===== КОНЕЦ ИСПРАВЛЕНИЯ ===== */
+
+    header {
+      background: rgba(0,0,0,0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      transition: all 0.25s;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-transform: translateZ(0);
+    }
+    header.scrolled {
+      background: rgba(0,0,0,0.98);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      font-family: var(--sans);
+    }
+    nav {
+      display: flex;
+      gap: 32px;
+    }
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 400;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      transition: 0.2s;
+      font-family: var(--sans);
+    }
+    nav a:hover {
+      color: var(--text);
+    }
+    .cta-header {
+      border: none;
+      padding: 10px 24px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-decoration: none;
+      display: inline-block;
+      font-family: var(--sans);
+    }
+    .cta-header:hover {
+      opacity: 0.8;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: calc(100vh - 77px);
+      background: #000000;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-left {
+      padding: 60px 64px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .hero-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-size: clamp(44px, 6.5vw, 76px);
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 0.92;
+      letter-spacing: -0.04em;
+      margin-bottom: 28px;
+      font-family: var(--sans);
+    }
+    .hero-title .hollow {
+      color: transparent;
+      -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.629);
+    }
+    .hero-sub {
+      font-size: 16px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 400px;
+      margin-bottom: 40px;
+      font-family: var(--sans);
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .btn-fill {
+      padding: 14px 30px;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      border-radius: 40px;
+      transition: opacity 0.2s;
+      font-family: var(--sans);
+    }
+    .btn-fill:hover {
+      opacity: 0.8;
+    }
+    .btn-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border2);
+      padding-bottom: 2px;
+      transition: color 0.2s;
+      font-family: var(--sans);
+    }
+    .btn-link:hover {
+      color: #FFFFFF;
+    }
+
+    .hero-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 25px 42px;
+      position: relative;
+      gap: 20px;
+      background: #000000;
+    }
+
+    .canvas-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    #cubeCanvas {
+      display: block;
+      width: 260px;
+      height: 260px;
+    }
+
+    .form-mini,
+    .form-mini-copy {
+      width: 100%;
+      max-width: 300px;
+      background: rgba(10,10,10,0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 22px 20px;
+      transition: all 0.25s ease;
+    }
+    .form-mini:hover,
+    .form-mini-copy:hover {
+      border-color: #FFFFFF;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+    }
+    .form-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+    .input-row {
+      margin-bottom: 12px;
+    }
+    .input-row input,
+    .input-row textarea {
+      width: 100%;
+      background: rgba(20,20,20,0.9);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      padding: 11px 16px;
+      font-family: var(--sans);
+      font-size: 13px;
+      color: #FFFFFF;
+      transition: all 0.2s;
+      outline: none;
+      resize: vertical;
+    }
+    .input-row input:focus,
+    .input-row textarea:focus {
+      border-color: #FFFFFF;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+    }
+    .input-row input::placeholder,
+    .input-row textarea::placeholder {
+      color: rgba(255,255,255,0.25);
+      font-size: 12px;
+      font-family: var(--sans);
+    }
+    .submit-mini {
+      width: 100%;
+      border: none;
+      border-radius: 40px;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 4px;
+      font-family: var(--sans);
+    }
+    .submit-mini:hover {
+      opacity: 0.8;
+      transform: scale(0.98);
+    }
+    .submit-mini.success {
+      box-shadow: 0 0 20px var(--green-glow);
+    }
+    .form-footnote {
+      font-family: var(--mono);
+      font-size: 9px;
+      text-align: center;
+      margin-top: 14px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .corner-mark {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: var(--border2);
+      border-style: solid;
+      pointer-events: none;
+    }
+    .cm-tl { top: 20px; left: 20px; border-width: 1px 0 0 1px; }
+    .cm-tr { top: 20px; right: 20px; border-width: 1px 1px 0 0; }
+    .cm-bl { bottom: 20px; left: 20px; border-width: 0 0 1px 1px; }
+    .cm-br { bottom: 20px; right: 20px; border-width: 0 1px 1px 0; }
+
+    section {
+      padding: 72px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .section-header h2 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #FFFFFF;
+      font-family: var(--sans);
+    }
+    .section-header p {
+      color: var(--text-muted);
+      margin-top: 10px;
+      font-family: var(--sans);
+    }
+
+    .process-grid,
+    .services-grid,
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+    }
+    .process-card,
+    .service-card,
+    .why-item {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 28px 22px;
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+    .process-card:hover,
+    .service-card:hover,
+    .why-item:hover {
+      transform: translateY(-4px);
+      border-color: #FFFFFF;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .process-card h3,
+    .service-card h3,
+    .why-item h3 {
+      font-family: var(--sans);
+    }
+    .process-card p,
+    .service-card p,
+    .why-item p {
+      font-family: var(--sans);
+      color: var(--text-muted);
+    }
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: #FFFFFF;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 22px;
+      color: #000000;
+      margin-bottom: 20px;
+      font-family: var(--sans);
+    }
+    .service-price {
+      font-size: 30px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin: 14px 0;
+      font-family: var(--sans);
+    }
+    .feature-list {
+      list-style: none;
+      margin-top: 16px;
+    }
+    .feature-list li {
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-muted);
+      font-family: var(--sans);
+    }
+    .why-icon {
+      font-size: 40px;
+      background: rgba(255,255,255,0.04);
+      width: 72px;
+      height: 72px;
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+      border: 1px solid var(--border);
+    }
+
+    .contacts-grid {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .contact-hero-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 24px 28px;
+      text-align: center;
+      transition: all 0.3s ease;
+      min-width: 160px;
+      flex: 1;
+    }
+    .contact-hero-card:hover {
+      transform: translateY(-4px);
+      border-color: #FFFFFF;
+      background: var(--surface);
+    }
+    .contact-hero-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .contact-hero-card h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-family: var(--sans);
+    }
+    .contact-hero-card a,
+    .contact-hero-card .contact-value {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      transition: color 0.2s;
+      font-family: var(--sans);
+    }
+    .contact-hero-card a:hover {
+      color: #FFFFFF;
+    }
+
+    .clients-section {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 40px 0;
+    }
+    .clients-section .section-header p {
+      font-family: var(--sans);
+    }
+    .carousel-track {
+      display: flex;
+      gap: 40px;
+      animation: scroll 28s linear infinite;
+      width: max-content;
+    }
+    .carousel-track:hover {
+      animation-play-state: paused;
+    }
+    .client-badge {
+      background: var(--card);
+      padding: 10px 24px;
+      border-radius: 60px;
+      font-weight: 500;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      transition: 0.2s;
+      white-space: nowrap;
+      font-family: var(--sans);
+    }
+    .client-badge:hover {
+      transform: scale(1.05);
+      border-color: #FFFFFF;
+      color: #FFFFFF;
+    }
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 44px 0 28px;
+      background: var(--surface);
+    }
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-family: var(--sans);
+    }
+    footer a:hover {
+      color: #FFFFFF;
+    }
+    footer h3, footer h4, footer p {
+      font-family: var(--sans);
+    }
+    footer li {
+      font-family: var(--sans);
+    }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s cubic-bezier(0.2,0.9,0.4,1.1), transform 0.7s ease;
+    }
+    .fade-up.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Scroll to form section */
+    #contact-modern {
+      scroll-margin-top: 80px;
+    }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-left { padding: 40px 28px; border-right: none; border-bottom: 1px solid var(--border); }
+      .hero-right { padding: 36px 28px; }
+      nav { display: none; }
+      .header-inner { flex-wrap: wrap; gap: 10px; }
+    }
+    @media (max-width: 600px) {
+      .hero-left { padding: 28px 18px; }
+      .hero-right { padding: 28px 18px; }
+      .form-mini { max-width: 100%; }
+      .section-header h2 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header id="mainHeader">
+    <div class="container">
+      <div class="header-inner">
+        <a href="#" class="logo">
+          ZEROTRACE
+        </a>
+        <nav>
+          <a href="#process">Process</a>
+          <a href="#services">Services</a>
+          <a href="#portfolio">Cases</a>
+          <a href="#why">About</a>
+          <a href="#contacts-section">Contact</a>
+        </nav>
+        <a href="#contact-modern" class="cta-header">Consultation</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-left">
+      <div>
+        <div class="hero-label">// Security Audit · Penetration Testing</div>
+        <h1 class="hero-title">A SOFT<br>APPROACH TO<br><span class="hollow">HARD DEFENSE</span></h1>
+        <p class="hero-sub">Professional security audits, pentests, and vulnerability analysis. We think like an attacker and defend like an architect.</p>
+        <div class="hero-actions">
+          <a href="#contact-modern" class="btn-fill">Order an audit</a>
+          <a href="#" class="btn-link">Watch cases →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="corner-mark cm-tl"></div>
+      <div class="corner-mark cm-tr"></div>
+      <div class="corner-mark cm-bl"></div>
+      <div class="corner-mark cm-br"></div>
+
+      <div class="canvas-area">
+        <canvas id="cubeCanvas" width="300" height="300"></canvas>
+      </div>
+
+      <!-- FORM 1: MINI FORM -->
+      <div class="form-mini">
+        <div class="form-title">Request a call</div>
+        <div class="input-row">
+          <input type="text" placeholder="Full name" id="miniName">
+        </div>
+        <div class="input-row">
+          <input type="email" placeholder="Email address" id="miniEmail">
+        </div>
+        <div class="input-row">
+          <input type="text" placeholder="Telegram / Phone" id="miniContact">
+        </div>
+        <div class="input-row">
+          <input type="text" placeholder="Project description" id="miniScope">
+        </div>
+        <button class="submit-mini" id="miniSubmitBtn">Send request →</button>
+        <div class="form-footnote">We reply within 2 hours • NDA guaranteed</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section id="process">
+    <div class="container">
+      <div class="section-header fade-up"><h2>⚙️ ZeroTrace Methodology</h2><p>Clear and transparent process</p></div>
+      <div class="process-grid">
+        <div class="process-card fade-up"><div class="step-number">1</div><h3>Recon & Analysis</h3><p>We study infrastructure, APIs, and applications to identify potential attack vectors.</p></div>
+        <div class="process-card fade-up"><div class="step-number">2</div><h3>Active Pentesting</h3><p>Manual testing + OWASP automation. We find complex logic vulnerabilities.</p></div>
+        <div class="process-card fade-up"><div class="step-number">3</div><h3>Report with PoC</h3><p>Detailed document with Proof-of-Concept, severity ratings, and fix roadmap.</p></div>
+        <div class="process-card fade-up"><div class="step-number">4</div><h3>60-Day Support</h3><p>Assistance with vulnerability remediation, re-verification, and consulting.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services" style="background:#080808;">
+    <div class="container">
+      <div class="section-header fade-up"><h2>💰 Services & Pricing</h2><p>Transparent pricing with no hidden fees</p></div>
+      <div class="services-grid">
+        <div class="service-card fade-up"><div style="font-size:32px;">⚡</div><h3>Quick Scan</h3><div class="service-price">$350–500</div><p>Surface-level audit, OWASP Top 10, basic recommendations.</p><ul class="feature-list"><li>✅ 8 hours testing</li><li>✅ Port scanning</li><li>✅ Report in 48h</li></ul></div>
+        <div class="service-card fade-up"><div style="font-size:32px;">🛡️</div><h3>Standard Audit</h3><div class="service-price">$700–1,000</div><p>Full pentest cycle: API, web, infrastructure, business logic.</p><ul class="feature-list"><li>✅ 40+ hours testing</li><li>✅ Detailed 30+ page report</li><li>✅ 30 days support</li></ul></div>
+        <div class="service-card fade-up"><div style="font-size:32px;">🏢</div><h3>Enterprise</h3><div class="service-price">$1,200–3,000</div><p>Comprehensive security: social engineering, team training, retest.</p><ul class="feature-list"><li>✅ Extended scope</li><li>✅ Developer training</li><li>✅ Follow-up audit in 3 months</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASES -->
+  <section id="portfolio">
+    <div class="container">
+      <div class="section-header fade-up"><h2>📁 Real Cases</h2><p>Vulnerabilities we found that saved millions</p></div>
+      <div class="services-grid">
+        <div class="service-card fade-up"><h3>🏦 Fintech Platform</h3><p>2FA bypass + SQL injection in admin panel.</p><div style="background:#1a1a1a; border-radius:16px; padding:10px; margin-top:12px; font-size:13px; color:var(--text-muted); font-family: var(--sans);">Critical: 3 | Fixed in 72h</div></div>
+        <div class="service-card fade-up"><h3>📦 E‑commerce Giant</h3><p>IDOR chain → 15k accounts compromised.</p><div style="background:#1a1a1a; border-radius:16px; padding:10px; margin-top:12px; font-size:13px; color:var(--text-muted); font-family: var(--sans);">High: 5 | Access control hardened</div></div>
+        <div class="service-card fade-up"><h3>☁️ Healthcare SaaS</h3><p>Sensitive data leak via API Gateway.</p><div style="background:#1a1a1a; border-radius:16px; padding:10px; margin-top:12px; font-size:13px; color:var(--text-muted); font-family: var(--sans);">Critical: 2 | Encryption audit</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section id="why" style="background:#080808;">
+    <div class="container">
+      <div class="section-header fade-up"><h2>Why ZeroTrace?</h2><p>Making security clear and achievable</p></div>
+      <div class="why-grid">
+        <div class="why-item fade-up"><div class="why-icon">🎯</div><h3>7+ Years Expertise</h3><p>Certified pentesters, bug bounty participants.</p></div>
+        <div class="why-item fade-up"><div class="why-icon">📄</div><h3>Clear Reports</h3><p>Fix guides + technical details for dev teams.</p></div>
+        <div class="why-item fade-up"><div class="why-icon">⚡</div><h3>Quick Start</h3><p>Audit launched within 24 hours after payment.</p></div>
+        <div class="why-item fade-up"><div class="why-icon">🔐</div><h3>NDA Guaranteed</h3><p>Full client data confidentiality.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORM 2: MAIN CONTACT FORM (scroll target) -->
+  <section id="contact-modern" style="background:#000000;">
+    <div class="container">
+      <div class="section-header fade-up"><h2>📬 Send a Request</h2><p>We'll get back to you within 2 hours</p></div>
+      <div class="form-mini-copy" style="max-width: 400px; margin: 0 auto;">
+        <div class="form-title">Request a consultation</div>
+        <div class="input-row">
+          <input type="text" placeholder="Full name" id="form2Name">
+        </div>
+        <div class="input-row">
+          <input type="email" placeholder="Email address" id="form2Email">
+        </div>
+        <div class="input-row">
+          <input type="text" placeholder="Telegram / Phone" id="form2Contact">
+        </div>
+        <div class="input-row">
+          <textarea rows="2" placeholder="Project description (stack, timeline, goals...)" id="form2Scope"></textarea>
+        </div>
+        <button class="submit-mini" id="form2SubmitBtn">Send request →</button>
+        <div class="form-footnote">We reply within 2 hours • NDA guaranteed</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACTS -->
+  <section id="contacts-section" style="background:#080808;">
+    <div class="container">
+      <div class="section-header fade-up"><h2>Contact Us Directly</h2><p>Choose your preferred way to reach us</p></div>
+      <div class="contacts-grid fade-up">
+        <div class="contact-hero-card"><div class="contact-hero-icon">💻</div><h3>GitHub</h3><a href="#">github.com/zerotrace-sec</a></div>
+        <div class="contact-hero-card"><div class="contact-hero-icon">📞</div><h3>Phone</h3><span class="contact-value">+998(97)011-37-56</span></div>
+        <div class="contact-hero-card"><div class="contact-hero-icon">💬</div><h3>Telegram</h3><a href="#">ZeroTrace Manager</a></div>
+        <div class="contact-hero-card"><div class="contact-hero-icon">💼</div><h3>LinkedIn</h3><a href="#">linkedin.com/in/zerotrace</a></div>
+        <div class="contact-hero-card"><div class="contact-hero-icon">✉️</div><h3>Email</h3><a href="mailto:hello@zerotrace.io">zerotrace.corp@gmail.com</a></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:30px;">
+        <div><h3 style="margin-bottom:12px;">ZeroTrace</h3><p style="font-size:13px; color:var(--text-muted);">Security audits<br>for modern companies.</p></div>
+        <div><h4>Services</h4><ul style="list-style:none;"><li style="margin:6px 0"><a href="#" style="color:var(--text-muted);">Pentesting</a></li><li style="margin:6px 0"><a href="#" style="color:var(--text-muted);">Code analysis</a></li></ul></div>
+        <div><h4>Contact</h4><p style="font-size:13px; color:var(--text-muted);">zerotrace.corp@gmail.com</p></div>
+      </div>
+      <div style="border-top:1px solid var(--border); margin-top:40px; padding-top:24px; text-align:center; font-size:12px; color:var(--text-dim); font-family: var(--sans);">© 2026 ZeroTrace Security — Your cybersecurity under control.</div>
+    </div>
+  </footer>
+
+  <script>
+    // ========== RHOMBUS (OCTAHEDRON) ==========
+    (function(){
+      const canvas = document.getElementById('cubeCanvas');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W/2, cy = H/2;
+      const R = 90;
+      const vertices = [
+        [0, -R - 55, 0], [0,  R + 55, 0], [ R, 0, 0], [-R, 0, 0], [0, 0,  R], [0, 0, -R]
+      ];
+      const edges = [
+        [0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[4,3],[3,5],[5,2]
+      ];
+      let angleY = 0, angleX = 0.15;
+      let glitchActive = false, glitchFrames = 0, glitchCooldown = 2.2, lastTs = 0;
+      let greenMode = false;
+      let greenModeEndTime = 0;
+
+      function rotateX(v,a){ const [x,y,z]=v; return [x, y*Math.cos(a)-z*Math.sin(a), y*Math.sin(a)+z*Math.cos(a)]; }
+      function rotateY(v,a){ const [x,y,z]=v; return [x*Math.cos(a)+z*Math.sin(a), y, -x*Math.sin(a)+z*Math.cos(a)]; }
+      function rotateZ(v,a){ const [x,y,z]=v; return [x*Math.cos(a)-y*Math.sin(a), x*Math.sin(a)+y*Math.cos(a), z]; }
+      function project(v){ return [cx + v[0], cy + v[1]]; }
+
+      function drawRhombus(offset){
+        ctx.clearRect(0,0,W,H);
+        let transformed = vertices.map(v => rotateZ(rotateX(rotateY(v, angleY), angleX), 0));
+        
+        let mainColor = greenMode ? '#00c853' : '#FFFFFF';
+        let glitchRed = greenMode ? '#00c853' : '#666666';
+        let glitchBlue = greenMode ? '#00c853' : '#444444';
+        
+        edges.forEach(([a,b])=>{
+          const pa = project(transformed[a]), pb = project(transformed[b]);
+          if(offset !== 0){
+            ctx.beginPath(); ctx.moveTo(pa[0]-offset,pa[1]); ctx.lineTo(pb[0]-offset,pb[1]);
+            ctx.strokeStyle = glitchRed; ctx.lineWidth=1.2; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(pa[0]+offset,pa[1]); ctx.lineTo(pb[0]+offset,pb[1]);
+            ctx.strokeStyle = glitchBlue; ctx.lineWidth=1.2; ctx.stroke();
+          }
+          ctx.beginPath(); ctx.moveTo(pa[0],pa[1]); ctx.lineTo(pb[0],pb[1]);
+          ctx.strokeStyle = mainColor; ctx.lineWidth=1.5; ctx.stroke();
+        });
+        
+        let vertexColor = greenMode ? '#00c853' : '#FFFFFF';
+        transformed.forEach(p => { 
+          const pp=project(p); 
+          ctx.beginPath(); 
+          ctx.arc(pp[0],pp[1],2.5,0,Math.PI*2); 
+          ctx.fillStyle = vertexColor; 
+          ctx.fill(); 
+        });
+        
+        if(greenMode){
+          ctx.shadowColor = 'rgba(0, 200, 83, 0.3)';
+          ctx.shadowBlur = 20;
+        } else {
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      function animate(ts){
+        const dt = Math.min((ts - lastTs)/1000, 0.05); 
+        lastTs = ts;
+        angleY += 0.52 * dt;
+        
+        if(greenMode && ts >= greenModeEndTime){
+          greenMode = false;
+        }
+        
+        glitchCooldown -= dt;
+        let offset = 0;
+        if(glitchCooldown <= 0 && !glitchActive){ 
+          glitchActive = true; 
+          glitchFrames = 0; 
+        }
+        if(glitchActive){ 
+          glitchFrames++; 
+          offset = glitchFrames < 8 ? 6 + Math.random() * 4 : 0; 
+          if(glitchFrames >= 13){ 
+            glitchActive = false; 
+            glitchCooldown = 1.7 + Math.random() * 2.3; 
+          } 
+        }
+        drawRhombus(offset);
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(ts => { lastTs = ts; requestAnimationFrame(animate); });
+      
+      window.rhombusController = {
+        activateGreen: function(durationMs = 2000) {
+          greenMode = true;
+          greenModeEndTime = performance.now() + durationMs;
+        }
+      };
+    })();
+
+    // ========== FORM 1: MINI FORM ==========
+    const miniSubmit = document.getElementById('miniSubmitBtn');
+    const miniName = document.getElementById('miniName');
+    const miniEmail = document.getElementById('miniEmail');
+    const miniContact = document.getElementById('miniContact');
+    const miniScope = document.getElementById('miniScope');
+
+    function miniFormSuccess(){
+      const btn = miniSubmit;
+      const originalText = btn.innerText;
+      btn.classList.add('success');
+      btn.innerText = '✓ SENT';
+      
+      if(window.rhombusController){
+        window.rhombusController.activateGreen(2000);
+      }
+      
+      setTimeout(() => { 
+        btn.classList.remove('success'); 
+        btn.innerText = originalText; 
+      }, 2000);
+      
+      setTimeout(() => { 
+        if(miniName) miniName.value = ''; 
+        if(miniEmail) miniEmail.value = ''; 
+        if(miniContact) miniContact.value = ''; 
+        if(miniScope) miniScope.value = ''; 
+      }, 500);
+    }
+
+    if(miniSubmit){
+      miniSubmit.addEventListener('click', (e) => {
+        e.preventDefault();
+        if(!miniName.value.trim() || !miniEmail.value.trim() || !miniContact.value.trim()){
+          [miniName, miniEmail, miniContact].forEach(f => { 
+            if(f && !f.value.trim()){ 
+              f.style.borderColor = '#888888'; 
+              setTimeout(()=>{ if(f) f.style.borderColor = ''; }, 600); 
+            } 
+          });
+          return;
+        }
+        miniFormSuccess();
+      });
+    }
+
+    // ========== FORM 2: MAIN FORM ==========
+    const form2Btn = document.getElementById('form2SubmitBtn');
+    const form2Name = document.getElementById('form2Name');
+    const form2Email = document.getElementById('form2Email');
+    const form2Contact = document.getElementById('form2Contact');
+    const form2Scope = document.getElementById('form2Scope');
+
+    function form2Success(){
+      const btn = form2Btn;
+      const originalText = btn.innerText;
+      btn.classList.add('success');
+      btn.innerText = '✓ SENT';
+      
+      if(window.rhombusController){
+        window.rhombusController.activateGreen(2000);
+      }
+      
+      setTimeout(() => { 
+        btn.classList.remove('success'); 
+        btn.innerText = originalText; 
+      }, 2000);
+      
+      setTimeout(() => { 
+        if(form2Name) form2Name.value = ''; 
+        if(form2Email) form2Email.value = ''; 
+        if(form2Contact) form2Contact.value = ''; 
+        if(form2Scope) form2Scope.value = ''; 
+      }, 500);
+    }
+
+    if(form2Btn){
+      form2Btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if(!form2Name.value.trim() || !form2Email.value.trim() || !form2Contact.value.trim()){
+          [form2Name, form2Email, form2Contact].forEach(f => { 
+            if(f && !f.value.trim()){ 
+              f.style.borderColor = '#888888'; 
+              setTimeout(()=>{ if(f) f.style.borderColor = ''; }, 600); 
+            } 
+          });
+          return;
+        }
+        form2Success();
+      });
+    }
+
+    // ========== FADE-UP ==========
+    const faders = document.querySelectorAll('.fade-up');
+    const appear = new IntersectionObserver((entries) => {
+      entries.forEach(e => { 
+        if(e.isIntersecting){ 
+          e.target.classList.add('revealed'); 
+          appear.unobserve(e.target); 
+        } 
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+    faders.forEach(el => appear.observe(el));
+
+    // ========== HEADER SCROLL ==========
+    const header = document.getElementById('mainHeader');
+    window.addEventListener('scroll', () => { 
+      if(window.scrollY > 30) header.classList.add('scrolled'); 
+      else header.classList.remove('scrolled'); 
+    });
+  </script>
+</body>
+</html>
